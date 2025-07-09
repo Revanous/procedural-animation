@@ -5,7 +5,7 @@
 #include <godot_cpp/classes/viewport.hpp>
 #include <godot_cpp/classes/input_event.hpp>
 
-#define MAX_JOINTS 5
+#define MAX_JOINTS 10
 #define MAX_POINTS ((MAX_JOINTS + 1) * 2)
 
 namespace godot
@@ -18,7 +18,8 @@ class Main : public Node2D
 private:
     const uint8_t joint_count = MAX_JOINTS;
     const uint8_t point_count = MAX_POINTS;
-    const float joint_radius = 100.0f;
+    const float joint_radius = 50.0f;
+    const float min_angle = (float)Math_PI * 2.0f / 3.0f;
     const Color outline_color = Color(0.4f, 0.9f, 0.8f, 1.0f);
 
     Viewport* viewport;
@@ -27,7 +28,6 @@ private:
     Vector2 screen_center;
     Vector2 joints[MAX_JOINTS];
     Vector2 points[MAX_POINTS];
-    Vector2 visual_joints[MAX_JOINTS + 1];
 
 protected:
     static void _bind_methods();
