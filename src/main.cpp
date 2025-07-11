@@ -7,19 +7,25 @@
 #include <godot_cpp/core/math.hpp>
 
 using namespace godot;
+using namespace Math;
 
 void Main::_bind_methods()
 {
     EXPORT_PROPERTY(show_points, BOOL, Main);
+    EXPORT_PROPERTY(use_snake_length, BOOL, Main);
     EXPORT_PROPERTY(joint_count, INT, Main);
-    EXPORT_PROPERTY(joint_radius, FLOAT, Main);
+    EXPORT_PROPERTY(snake_length, FLOAT, Main);
+
+    EXPORT_PROPERTY(angle_coeff, FLOAT, Main);
+    EXPORT_PROPERTY(head_size, FLOAT, Main);
     EXPORT_PROPERTY(radius_scale, FLOAT, Main);
-    EXPORT_PROPERTY(scale_power, INT, Main);
+    EXPORT_PROPERTY(scale_power, FLOAT, Main);
 }
 
 void Main::_ready()
 {
     viewport = get_viewport();
+    recalculate_sizes();
 }
 
 void Main::_draw()
@@ -34,7 +40,7 @@ void Main::_draw()
     {
         for (uint8_t i = 0; i < point_count; ++i)
         {
-            draw_circle(points[i], 5.0f, Color(1.0f, 0.0f, 0.0f, 2.0f), true, -1.0f, true);
+            draw_circle(points[i], joint_sizes[i / joint_count] / 10.0f, Color(1.0f, 0.0f, 0.0f, 2.0f), true, -1.0f, true);
         }
     }
 }
@@ -44,65 +50,77 @@ void Main::_input(const Ref<InputEvent>& p_event)
     Ref<InputEventMouse> mouse_input = p_event;
     if (mouse_input != nullptr && mouse_input->get_button_mask() == 1)
     {
-        head = viewport->get_mouse_position();
+        snake_nose = viewport->get_mouse_position();
+        points[0] = snake_nose;
     }
 }
 
 void Main::_process(double delta)
 {
-    Vector2 front_point = head;
-    points[point_count - 1] = front_point;
+    Vector2 direction = snake_head - snake_nose;
+    direction = direction.normalized() * head_size;
+    Vector2 orth_direction(direction.y, direction.x * -1.0f);
 
-    Vector2 direction = joints[0] - front_point;
-    // direction = direction.normalized() * joint_radius / 2.0f;
+    Vector2 front_point = snake_nose + direction;
+    snake_head = front_point;
+
+    const float cheek_angle = (float)Math_PI / 3.0f;
+    Vector2 cheek_direction_v = cos(cheek_angle) * orth_direction;
+    Vector2 cheek_direction_w = sin(cheek_angle) * direction;
+
+    points[1] = front_point + cheek_direction_v - cheek_direction_w;
+    points[point_count - 1] = front_point - cheek_direction_v - cheek_direction_w;
+    points[point_count - 2] = front_point - orth_direction;
+    points[2] = front_point + orth_direction;
 
     for (uint8_t i = 0; i < joint_count; ++i)
     {
         Vector2 difference = joints[i] - front_point;
         float vector_angle = direction.angle_to(difference * -1.0f);
 
-        float angle_shift = Math::abs(vector_angle) - min_angle;
+        float radius_ratio = joint_sizes[i] / joint_radius * angle_coeff;
+        float angle_shift = abs(vector_angle) - (float)Math_PI * radius_ratio / (radius_ratio + 1.0f);
         if (angle_shift < 0.0f)
         {
-            vector_angle = difference.angle() - angle_shift * Math::sign(vector_angle);
-            direction = Vector2(Math::cos(vector_angle), Math::sin(vector_angle));
+            vector_angle = difference.angle() - angle_shift * sign(vector_angle);
+            direction = Vector2(cos(vector_angle), sin(vector_angle));
         }
         else
         {
             direction = difference.normalized();
         }
+        orth_direction = Vector2(direction.y * joint_sizes[i], direction.x * joint_sizes[i] * -1.0f);
 
-        direction *= radiuses[i] / 2.0f;
-        front_point += direction;
+        front_point += direction * joint_radius;
 
-        points[i].x = front_point.x + direction.y;
-        points[i].y = front_point.y - direction.x;
-        points[point_count - i - 2].x = front_point.x - direction.y;
-        points[point_count - i - 2].y = front_point.y + direction.x;
-
-        front_point += direction;
+        points[i + 3] = front_point + orth_direction;
+        points[point_count - i - 3]= front_point - orth_direction;
         joints[i] = front_point;
     }
-    points[joint_count] = front_point;
+    points[joint_count + 3] = Vector2(front_point.x - orth_direction.y, front_point.y + orth_direction.x);
 
     queue_redraw();
 }
 
-inline void Main::recalculate_radiuses()
+inline void Main::recalculate_sizes()
 {
     for (uint8_t i = 0; i < joint_count; ++i)
     {
-        radiuses[i] = joint_radius / (Math::pow((float)i, (float)scale_power) / radius_scale + 1.0f);
+        joint_sizes[i] = head_size / (pow((float)i, scale_power) * radius_scale + 1.0f);
     }
 }
 
 DEFINE_PROPERTY(show_points, bool, Main, )
+DEFINE_PROPERTY(use_snake_length, bool, Main, )
 DEFINE_PROPERTY(joint_count, uint8_t, Main, 
     if (joint_count < 0) joint_count = 0; 
     if (joint_count > 100) joint_count = 100; 
+    joint_radius = snake_length / joint_count;
     point_count = GET_POINT_COUNT(joint_count); 
-    recalculate_radiuses();
+    recalculate_sizes();
 )
-DEFINE_PROPERTY(joint_radius, float, Main, recalculate_radiuses();)
-DEFINE_PROPERTY(radius_scale, float, Main, recalculate_radiuses();)
-DEFINE_PROPERTY(scale_power, uint8_t, Main, recalculate_radiuses();)
+DEFINE_PROPERTY(snake_length, float, Main, joint_radius = snake_length / joint_count;)
+DEFINE_PROPERTY(angle_coeff, float, Main, )
+DEFINE_PROPERTY(head_size, float, Main, recalculate_sizes();)
+DEFINE_PROPERTY(radius_scale, float, Main, recalculate_sizes();)
+DEFINE_PROPERTY(scale_power, float, Main, recalculate_sizes();)

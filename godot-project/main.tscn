@@ -1,7 +1,9 @@
 [gd_scene format=3 uid="uid://bg5w3vyqe31ls"]
 
 [node name="Main" type="Main"]
-joint_count = 50
-joint_radius = 40.0
-radius_scale = 50.0
-scale_power = 2
+joint_count = 30
+snake_length = 300.0
+angle_coeff = 5.0
+head_size = 20.0
+radius_scale = 0.010000000009313226
+scale_power = 2.0

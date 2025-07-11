@@ -5,7 +5,6 @@
 #define STR(X) STR_HELPER(X)
 
 #define DECLARE_PROPERTY(name, type)\
-    type name;\
     void set_##name(const type name);\
     type get_##name() const
 
