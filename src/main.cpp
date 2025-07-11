@@ -25,6 +25,7 @@ void Main::_bind_methods()
 void Main::_ready()
 {
     viewport = get_viewport();
+    canvas_item = get_canvas_item();
     recalculate_sizes();
 }
 
@@ -78,7 +79,10 @@ void Main::_process(double delta)
         Vector2 difference = joints[i] - front_point;
         float vector_angle = direction.angle_to(difference * -1.0f);
 
-        float radius_ratio = joint_sizes[i] / joint_radius * angle_coeff;
+        float radius_ratio = joint_sizes[i] * angle_coeff;
+        if (use_snake_length)
+            radius_ratio /= joint_radius;
+
         float angle_shift = abs(vector_angle) - (float)Math_PI * radius_ratio / (radius_ratio + 1.0f);
         if (angle_shift < 0.0f)
         {
@@ -91,7 +95,10 @@ void Main::_process(double delta)
         }
         orth_direction = Vector2(direction.y * joint_sizes[i], direction.x * joint_sizes[i] * -1.0f);
 
-        front_point += direction * joint_radius;
+        if (use_snake_length)
+            front_point += direction * joint_radius;
+        else
+            front_point += direction * joint_sizes[i];
 
         points[i + 3] = front_point + orth_direction;
         points[point_count - i - 3]= front_point - orth_direction;
