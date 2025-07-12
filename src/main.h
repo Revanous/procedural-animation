@@ -4,11 +4,12 @@
 #include <godot_cpp/classes/node2d.hpp>
 #include <godot_cpp/classes/input_event.hpp>
 #include <godot_cpp/classes/viewport.hpp>
+#include <godot_cpp/classes/geometry2d.hpp>
+#include <godot_cpp/classes/rendering_server.hpp>
 
 #include "personal_macro.h"
 
 #define MAX_JOINTS 100
-#define GET_POINT_COUNT(joint_count) ((joint_count + 3) * 2)
 
 namespace godot
 {
@@ -18,12 +19,17 @@ class Main : public Node2D
     GDCLASS(Main, Node2D);
 
 private:
-    const Color outline_color = Color(0.4f, 0.9f, 0.8f, 1.0f);
-    bool show_points = false;
+    Color outline_color = Color(0.8f, 0.9f, 1.0f, 1.0f);
+    Color fill_color = Color(0.4f, 0.9f, 0.8f, 1.0f);
+    Color vertex_color = Color(1.0f, 0.0f, 0.0f, 1.0f);
+
+    bool show_vertices = false;
+    bool show_outline = false;
     bool use_snake_length = true;
 
     uint8_t joint_count = 20;
-    uint8_t point_count = GET_POINT_COUNT(joint_count);
+    uint8_t vertex_count = (joint_count + 3) * 2;
+    uint8_t index_count = (vertex_count - 2) * 3;
 
     float angle_coeff = 1.0f;
     float snake_length = 30.0f;
@@ -37,21 +43,33 @@ private:
     Vector2 snake_nose;
     Vector2 snake_head;
     Vector2 joints[MAX_JOINTS];
-    Vector2 points[GET_POINT_COUNT(MAX_JOINTS)];
+    PackedVector2Array vertices;
+    PackedInt32Array indices;
 
     Viewport* viewport;
+    RID canvas_item;
+    RenderingServer* rendering_server;
 
 protected:
     static void _bind_methods();
 
 public:
     void _ready() override;
-    void _draw() override;
     void _process(double delta) override;
-    inline void recalculate_sizes();
+    void _draw() override;
     void _input(const Ref<InputEvent>& p_event) override;
 
-    DECLARE_PROPERTY(show_points, bool);
+    inline void calculate_vertices();
+    inline void recalculate_sizes();
+    inline void draw_traingles();
+
+    DECLARE_PROPERTY(outline_color, Color);
+    DECLARE_PROPERTY(fill_color, Color);
+    DECLARE_PROPERTY(vertex_color, Color);
+
+    DECLARE_PROPERTY(show_vertices, bool);
+    DECLARE_PROPERTY(show_outline, bool);
+
     DECLARE_PROPERTY(use_snake_length, bool);
     DECLARE_PROPERTY(joint_count, uint8_t);
     DECLARE_PROPERTY(snake_length, float);
