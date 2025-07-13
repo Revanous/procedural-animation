@@ -25,4 +25,5 @@ window/size/viewport_height=1080
 
 [rendering]
 
+anti_aliasing/quality/msaa_2d=3
 environment/defaults/default_clear_color=Color(0.15686275, 0.21568626, 0.27450982, 1)

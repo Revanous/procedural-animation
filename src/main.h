@@ -27,17 +27,17 @@ private:
     bool show_outline = false;
     bool use_snake_length = true;
 
-    uint8_t joint_count = 20;
-    uint8_t vertex_count = (joint_count + 3) * 2;
-    uint8_t index_count = (vertex_count - 2) * 3;
+    uint32_t joint_count;
+    uint32_t vertex_count;
+    uint32_t index_count;
 
-    float angle_coeff = 1.0f;
-    float snake_length = 30.0f;
+    float angle_coeff = 4.0f;
+    float snake_length = 300.0f;
     float joint_radius = snake_length / joint_count;
 
-    float head_size = 50.0f;
-    float radius_scale = 10.0f;
-    float scale_power = 1.0f;
+    float head_size = 20.0f;
+    float radius_scale = 0.02f;
+    float scale_power = 2.0f;
     float joint_sizes[MAX_JOINTS];
 
     Vector2 snake_nose;
@@ -71,7 +71,7 @@ public:
     DECLARE_PROPERTY(show_outline, bool);
 
     DECLARE_PROPERTY(use_snake_length, bool);
-    DECLARE_PROPERTY(joint_count, uint8_t);
+    DECLARE_PROPERTY(joint_count, uint32_t);
     DECLARE_PROPERTY(snake_length, float);
 
     DECLARE_PROPERTY(angle_coeff, float);

@@ -34,8 +34,6 @@ void Main::_ready()
     canvas_item = get_canvas_item();
     rendering_server = RenderingServer::get_singleton();
 
-    vertices.resize(vertex_count);
-    indices.resize(index_count);
     recalculate_sizes();
 }
 
@@ -47,7 +45,7 @@ void Main::_draw()
     {
         draw_line(vertices[0], vertices[1], outline_color, 1.0f, true);
         draw_line(vertices[0], vertices[2], outline_color, 1.0f, true);
-        for (uint8_t i = 0; i < joint_count + 1; ++i)
+        for (uint32_t i = 0; i < joint_count + 1; ++i)
         {
             draw_line(vertices[i * 2 + 1], vertices[i * 2 + 3], outline_color, 1.0f, true);
             draw_line(vertices[i * 2 + 2], vertices[i * 2 + 4], outline_color, 1.0f, true);
@@ -58,7 +56,7 @@ void Main::_draw()
 
     if (show_vertices)
     {
-        for (uint8_t i = 0; i < vertex_count; ++i)
+        for (uint32_t i = 0; i < vertex_count; ++i)
         {
             draw_circle(vertices[i], joint_sizes[i / joint_count] / 10.0f, Color(1.0f, 0.0f, 0.0f, 2.0f), true, -1.0f, true);
         }
@@ -119,7 +117,7 @@ inline void Main::calculate_vertices()
     indices[7] = 1;
     indices[8] = 3;
 
-    for (uint8_t i = 0; i < joint_count; ++i)
+    for (uint32_t i = 0; i < joint_count; ++i)
     {
         Vector2 difference = joints[i] - front_point;
         float vector_angle = direction.angle_to(difference * -1.0f);
@@ -170,7 +168,7 @@ inline void Main::calculate_vertices()
 
 inline void Main::recalculate_sizes()
 {
-    for (uint8_t i = 0; i < joint_count; ++i)
+    for (uint32_t i = 0; i < joint_count; ++i)
     {
         joint_sizes[i] = head_size / (pow((float)i, scale_power) * radius_scale + 1.0f);
     }
@@ -184,11 +182,16 @@ DEFINE_PROPERTY(show_vertices, bool, Main, )
 DEFINE_PROPERTY(show_outline, bool, Main, )
 
 DEFINE_PROPERTY(use_snake_length, bool, Main, )
-DEFINE_PROPERTY(joint_count, uint8_t, Main, 
+DEFINE_PROPERTY(joint_count, uint32_t, Main, 
     if (joint_count < 0) joint_count = 0; 
-    if (joint_count > 100) joint_count = 100; 
+    if (joint_count > MAX_JOINTS) joint_count = MAX_JOINTS; 
+
     joint_radius = snake_length / joint_count;
     vertex_count = (joint_count + 3) * 2; 
+    index_count = (vertex_count - 2) * 3;
+    vertices.resize(vertex_count);
+    indices.resize(index_count);
+
     recalculate_sizes();
 )
 
