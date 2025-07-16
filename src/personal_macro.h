@@ -17,4 +17,6 @@
     void class::set_##name(const type p_##name) { name = p_##name; context }\
     type class::get_##name() const { return name; }
 
+#define Math_SQRTTAU 2.506628275
+
 #endif

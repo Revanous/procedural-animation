@@ -1,7 +1,16 @@
 [gd_scene format=3 uid="uid://bg5w3vyqe31ls"]
 
 [node name="Main" type="Main"]
-outline_color = Color(1, 1, 1, 1)
-fill_color = Color(1, 1, 1, 1)
-show_vertices = true
-joint_count = 20
+fill_color = Color(0.12173463, 0.55216205, 0.78908795, 1)
+fins_color = Color(0.30424196, 0.8868881, 0.9884601, 1)
+vertex_color = Color(0.9887133, 0, 0.28436255, 1)
+show_outline = true
+joint_count = 10
+shape_length = 200.0
+shape_width = 25.0
+outline_width = 2.5
+angle_coeff = 6.0
+radius_coeff = 0.1999999999970896
+size_power = 2.0
+size_shift = -0.5999999999912689
+size_coeff = 0.1999999999970896
