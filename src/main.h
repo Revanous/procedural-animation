@@ -29,6 +29,7 @@ private:
     uint32_t joint_count;
     uint32_t vertex_count;
     uint32_t index_count;
+    uint32_t fins_count = 4;
 
     float angle_coeff = 4.0f;
     float shape_length = 15.0f;
@@ -45,6 +46,7 @@ private:
     float size_shift = 2.0f;
     float size_coeff = 1.0f;
     float sizes[MAX_JOINTS];
+    float angles[MAX_JOINTS];
 
     float speed = 500.0f;
     Vector2 head_position;
@@ -53,9 +55,12 @@ private:
 
     Vector2 joints[MAX_JOINTS];
     Vector2 eyes[2];
+    Vector2 fins[4];
     Vector2 vertex_sum;
     PackedVector2Array vertices;
     PackedVector2Array outline;
+    PackedVector2Array fins_vertices[4];
+    PackedVector2Array fins_outline[4];
     PackedInt32Array indices;
 
     RID canvas_item;
@@ -74,6 +79,7 @@ public:
     inline void calculate_head(Vector2 &direction, Vector2 &orth_direction, Vector2 &current_joint);
     inline void calculate_body(Vector2 &direction, Vector2 &orth_direction, Vector2 &current_joint);
     inline void calculate_tail(Vector2 &direction, Vector2 &orth_direction, Vector2 &current_joint);
+    inline void calculate_fins();
 
     inline void recalculate_radiuses();
     inline void draw_traingles();

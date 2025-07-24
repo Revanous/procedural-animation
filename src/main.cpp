@@ -108,6 +108,7 @@ inline void Main::calculate_shape()
     calculate_head(direction, orth_direction, current_joint);
     calculate_body(direction, orth_direction, current_joint);
     calculate_tail(direction, orth_direction, current_joint);
+    calculate_fins();
 }
 
 inline void Main::calculate_head(Vector2 &direction, Vector2 &orth_direction, Vector2 &current_joint)
@@ -161,6 +162,7 @@ inline void Main::calculate_body(Vector2 &direction, Vector2 &orth_direction, Ve
         orth_direction = Vector2(direction.y * sizes[i], direction.x * sizes[i] * -1.0f);
         current_joint += direction * radiuses[i];
         joints[i] = current_joint;
+        angles[i] = vector_angle;
 
 
         uint32_t j = i * 2;
@@ -218,41 +220,83 @@ inline void Main::calculate_tail(Vector2 &direction, Vector2 &orth_direction, Ve
     indices[index_count - 1] = vertex_count - 3;
 }
 
-inline void draw_ellipse(RenderingServer* rendering_server, const RID &canvas_item, const Vector2 &center, float rotation_angle, float radius_x, float radius_y, uint32_t segments, Color color)
+inline void Main::calculate_fins()
 {
-    PackedColorArray colors = { color };
-    PackedVector2Array points;
-    points.resize(segments);
+    uint32_t fins_pair_count = fins_count / 2;
+    uint32_t joint_id = joint_count / 8;
 
-    Vector2 rotation_x(cos(rotation_angle), sin(rotation_angle));
-    Vector2 rotation_y(rotation_x.y * -1.0f, rotation_x.x);
-
-    float angle = 0.0f;
-    float step = (float)Math_TAU / (float)segments;
-
-    for (uint32_t i = 0; i < segments; ++i)
+    for (uint32_t i = 0; i < fins_pair_count; ++i)
     {
-        Vector2 x = cos(angle) * radius_x * rotation_x;
-        Vector2 y = sin(angle) * radius_y * rotation_y;
+        float min_angle = (float)Math_PI * -0.8f;
+        float max_angle = (float)Math_PI * -0.5f;
 
-        points[i] = center + x + y;
-        angle += step;
+        Vector2 joint_difference = joints[joint_id] - joints[joint_id + 1];
+
+        for (uint32_t j = 0; j < 2; ++j)
+        {
+            Vector2 difference = fins[i * 2 + j] - joints[joint_id];
+            float vector_angle = joint_difference.angle_to(difference);
+
+            if (vector_angle < min_angle)
+            {
+                vector_angle -= min_angle;
+            }
+            else if (vector_angle > max_angle)
+            {
+                vector_angle -= max_angle;
+            }
+            else
+            {
+                vector_angle = 0.0f;
+            }
+
+            float radius_x = radiuses[joint_id];
+            float radius_y = radius_x / 2.0f;
+            vector_angle = difference.angle() - vector_angle;
+
+
+            Vector2 rotation_x(cos(vector_angle), sin(vector_angle));
+            Vector2 rotation_y(rotation_x.y * -1.0f, rotation_x.x);
+
+            Vector2 center = joints[joint_id] + rotation_x * radius_x * 1.5f;
+            fins[i * 2 + j] = center;
+
+
+            float angle = 0.0f;
+            float step = (float)Math_TAU / (float)16;
+
+            for (uint32_t k = 0; k < 16; ++k)
+            {
+                Vector2 x = cos(angle) * radius_x * rotation_x;
+                Vector2 y = sin(angle) * radius_y * rotation_y;
+
+                fins_vertices[i * 2 + j][k] = center + x + y;
+                fins_outline[i * 2 + j][k] = fins_vertices[i * 2 + j][k] + (x / radius_x + y / radius_y) * outline_width;
+                angle += step;
+            }
+
+            min_angle = (float)Math_PI * 0.5f;
+            max_angle = (float)Math_PI * 0.8f;
+        }
+        joint_id = joint_count / 2;
     }
-
-    rendering_server->canvas_item_add_polygon(canvas_item, points, colors);
 }
 
 inline void Main::draw_traingles()
 {
     rendering_server->canvas_item_clear(canvas_item);
 
-    draw_ellipse(rendering_server, canvas_item, vertices[4 + joint_count / 3], (float)Math_PI / -4.0f, 30.0f, 10.0f, 16, fins_color);
-    draw_ellipse(rendering_server, canvas_item, vertices[5 + joint_count / 3], (float)Math_PI / 4.0f, 30.0f, 10.0f, 16, fins_color);
-    draw_ellipse(rendering_server, canvas_item, vertices[5 + joint_count], (float)Math_PI / -4.0f, 15.0f, 5.0f, 16, fins_color);
-    draw_ellipse(rendering_server, canvas_item, vertices[6 + joint_count], (float)Math_PI / 4.0f, 15.0f, 5.0f, 16, fins_color);
-
     PackedColorArray colors = { fill_color };
     PackedColorArray outline_color = { outline_color };
+    PackedColorArray fins_colors = { fins_color };
+
+    for (uint32_t i = 0; i < fins_count; ++i)
+    {
+        if (show_outline)
+            rendering_server->canvas_item_add_polygon(canvas_item, fins_outline[i], outline_color);
+
+        rendering_server->canvas_item_add_polygon(canvas_item, fins_vertices[i], fins_colors);
+    }
 
 
     if (show_outline)
@@ -311,6 +355,12 @@ DEFINE_PROPERTY(joint_count, uint32_t, Main,
     vertices.resize(vertex_count);
     indices.resize(index_count);
     outline.resize(vertex_count);
+
+    for (uint32_t i = 0; i < fins_count; ++i)
+    {
+        fins_vertices[i].resize(16);
+        fins_outline[i].resize(16);
+    }
 
     recalculate_radiuses();
 )
